@@ -1,0 +1,288 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Admin Management
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("admin") // "admin" | "super_admin" | "manager"
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+// User Management
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  name            String
+  phone           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  baskets         SmartBasket[]
+  transactions    Transaction[]
+  paymentMethods  PaymentMethod[]
+  preferences     UserPreferences?
+
+  @@map("users")
+}
+
+model PaymentMethod {
+  id          String  @id @default(cuid())
+  userId      String
+  type        String  // "card" | "digital_wallet" | "bank_account"
+  provider    String
+  last4       String?
+  isDefault   Boolean @default(false)
+
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("payment_methods")
+}
+
+model UserPreferences {
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  notifications   Boolean @default(true)
+  autoCheckout    Boolean @default(false)
+  expiryAlerts    Boolean @default(true)
+  receiptFormat   String  @default("email") // "email" | "sms" | "app"
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// Product Management
+model Product {
+  id            String    @id @default(cuid())
+  name          String
+  price         Float
+  barcode       String    @unique
+  rfidTag       String?   @unique
+  weight        Float?
+  category      String
+  brand         String?
+  description   String?
+  expiryDays    Int?      // Shelf life in days
+  supplier      String?
+  costPrice     Float?
+  margin        Float?
+  stockLevel    Int       @default(0)
+  minStockLevel Int       @default(0)
+  maxStockLevel Int       @default(0)
+  location      String?   // Store location
+  taxRate       Float     @default(0)
+  isPerishable  Boolean   @default(false)
+  imageUrl      String?
+  status        String    @default("active") // "active" | "inactive" | "discontinued"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Nutrition Information (JSON field)
+  nutritionInfo Json?
+
+  // Relations
+  basketItems   BasketItem[]
+  expiryItems   ExpiryItem[]
+
+  @@map("products")
+}
+
+// Smart Basket System
+model SmartBasket {
+  id           String       @id @default(cuid())
+  userId       String?
+  sessionId    String       @unique
+  totalAmount  Float        @default(0)
+  status       String       @default("active") // "active" | "checkout" | "completed" | "abandoned"
+  storeId      String
+  aisle        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  user          User?           @relation(fields: [userId], references: [id])
+  items         BasketItem[]
+  transactions  Transaction[]
+  securityEvents SecurityEvent[]
+
+  @@map("smart_baskets")
+}
+
+model BasketItem {
+  id            String      @id @default(cuid())
+  basketId      String
+  productId     String
+  quantity      Int         @default(1)
+  scannedMethod String      // "barcode" | "rfid" | "weight" | "manual"
+  addedAt       DateTime    @default(now())
+
+  // Relations
+  basket  SmartBasket @relation(fields: [basketId], references: [id], onDelete: Cascade)
+  product Product     @relation(fields: [productId], references: [id])
+
+  @@map("basket_items")
+}
+
+// IoT Sensors and Hardware
+model IoTSensor {
+  id             String   @id @default(cuid())
+  sensorId       String   @unique
+  type           String   // "rfid" | "weight" | "barcode" | "camera"
+  location       String
+  status         String   @default("online") // "online" | "offline" | "maintenance"
+  batteryLevel   Int?
+  signalStrength Int?
+  basketId       String?
+  lastPing       DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  sensorData SensorData[]
+
+  @@map("iot_sensors")
+}
+
+model SensorData {
+  id         String   @id @default(cuid())
+  sensorId   String
+  basketId   String?
+  sensorType String   // "rfid" | "weight" | "camera"
+  data       Json     // Flexible JSON data
+  processed  Boolean  @default(false)
+  timestamp  DateTime @default(now())
+
+  // Relations
+  sensor IoTSensor @relation(fields: [sensorId], references: [sensorId])
+
+  @@map("sensor_data")
+}
+
+// Security Cameras
+model SecurityCamera {
+  id               String   @id @default(cuid())
+  cameraId         String   @unique
+  name             String
+  location         String
+  status           String   @default("online") // "online" | "offline" | "maintenance"
+  resolution       String   @default("1080p") // "720p" | "1080p" | "4k"
+  aiEnabled        Boolean  @default(true)
+  recordingStatus  String   @default("active") // "active" | "stopped" | "paused"
+  lastMaintenance  DateTime?
+  alerts           Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  securityEvents SecurityEvent[]
+  aiDetections   AIDetection[]
+
+  @@map("security_cameras")
+}
+
+// Security and AI Detection
+model SecurityEvent {
+  id           String      @id @default(cuid())
+  basketId     String
+  type         String      // "suspicious_behavior" | "item_removal" | "unauthorized_access" | "expired_item"
+  severity     String      // "low" | "medium" | "high" | "critical"
+  description  String
+  resolved     Boolean     @default(false)
+  aiConfidence Float?
+  cameraId     String?
+  imageUrl     String?
+  timestamp    DateTime    @default(now())
+
+  // Relations
+  basket SmartBasket    @relation(fields: [basketId], references: [id])
+  camera SecurityCamera? @relation(fields: [cameraId], references: [cameraId])
+
+  @@map("security_events")
+}
+
+model AIDetection {
+  id          String   @id @default(cuid())
+  cameraId    String
+  type        String   // "object" | "behavior" | "expiry"
+  confidence  Float
+  boundingBox Json?    // {x, y, width, height}
+  description String
+  timestamp   DateTime @default(now())
+
+  // Relations
+  camera SecurityCamera @relation(fields: [cameraId], references: [cameraId])
+
+  @@map("ai_detections")
+}
+
+// Transaction and Payment
+model Transaction {
+  id              String        @id @default(cuid())
+  basketId        String
+  userId          String?
+  paymentMethodId String
+  amount          Float
+  tax             Float         @default(0)
+  status          String        @default("pending") // "pending" | "completed" | "failed" | "refunded"
+  receiptUrl      String?
+  timestamp       DateTime      @default(now())
+
+  // Relations
+  basket        SmartBasket   @relation(fields: [basketId], references: [id])
+  user          User?         @relation(fields: [userId], references: [id])
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@map("transactions")
+}
+
+// Inventory and Expiry Management
+model ExpiryItem {
+  id             String   @id @default(cuid())
+  productId      String
+  location       String
+  expiryDate     DateTime
+  daysUntilExpiry Int
+  quantity       Int
+  status         String   // "expired" | "expiring" | "fresh"
+  supplier       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("expiry_items")
+}
+
+// System Analytics and Logs
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   // "info" | "warn" | "error" | "debug"
+  message   String
+  context   Json?    // Additional context data
+  timestamp DateTime @default(now())
+
+  @@map("system_logs")
+}
