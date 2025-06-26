@@ -7,8 +7,8 @@ import { Suspense } from "react"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "AUTOPARTS - Find Auto Parts Instantly",
-  description: "Instant search across thousands of stores in your city powered by artificial intelligence",
+  title: "Self Checkout system",
+  description: "Self checkout system for IoT and AI technology",
     generator: 'v0.dev'
 }
 
