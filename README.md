@@ -46,7 +46,8 @@ A comprehensive IoT and AI-powered smart checkout system that allows customers t
 
 ## 📁 Project Structure
 
-\`\`\`
+
+```
 smart-checkout-system/
 ├── app/                          # Next.js app directory
 │   ├── api/                      # API routes
@@ -68,7 +69,7 @@ smart-checkout-system/
 ├── types/                       # TypeScript type definitions
 │   └── index.ts
 └── README.md
-\`\`\`
+```
 
 ## 🚀 Getting Started
 
@@ -79,24 +80,27 @@ smart-checkout-system/
 ### Installation
 
 1. **Clone the repository**
-\`\`\`bash
+```bash
 git clone <repository-url>
+
 cd smart-checkout-system
-\`\`\`
+```
 
 2. **Install dependencies**
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 3. **Start the development server**
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 4. **Set up the database**
 ```bash
 pnpm db:migrate
+```
+```bash
 pnpm db:seed
 ```
 
@@ -132,24 +136,24 @@ Follow the interactive prompts to create your admin account.
 ## 🔧 Key Components
 
 ### IoT Simulation (`lib/iot-simulator.ts`)
-- Simulates RFID, barcode, and weight sensors
+- Simulates `RFID` ,  `barcode`, and `weight` sensors
 - Generates realistic sensor data
 - Handles product detection and validation
 
 ### AI Security System (`lib/ai-security.ts`)
-- Computer vision simulation for theft detection
-- Behavioral analysis algorithms
-- Security event generation and classification
+- `Computer vision` simulation for theft detection
+- `Behavioral analysis` algorithms
+- `Security event generation` and `classification`
 
 ### Payment Processing (`lib/payment.ts`)
-- Secure payment intent creation
-- Multiple payment method support
-- Transaction processing and receipt generation
+- `Secure` payment intent creation
+- `Multiple` payment method support
+- `Transaction` processing and `receipt generation`
 
 ### Real-time Communication (`lib/websocket.ts`)
-- WebSocket management for live updates
-- Event-driven architecture
-- Real-time basket synchronization
+- `WebSocket` management for live updates
+- `Event-driven` architecture
+- `Real-time` basket synchronization
 
 ## 🧪 Testing Features
 
